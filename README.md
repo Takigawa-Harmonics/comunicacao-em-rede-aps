@@ -19,4 +19,4 @@ Além da comunicação, outros elementos poderão ser acrescidos, tais como: com
 
 ## Licença
 
-A licença escolhida para este projeto foi a MIT License. Veja a [License.md](https://opensource.org/license/mit) para mais detalhes.
+A licença escolhida para este projeto foi a MIT License. Veja a [LICENSE.md](https://github.com/Invokedzz/comunicacao-em-rede-aps/blob/master/LICENSE.md) para mais detalhes.
