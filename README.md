@@ -29,10 +29,9 @@ Tendo realizado essa etapa, vá para a raiz do ``/ComunicacaoEmRedeApi`` e execu
 dotnet run
 ```
 
-
 ## Como contribuir
 
-Se deseja contribuir nesse repositório, veja o [CONTRIBUTING.md](https://github.com/Invokedzz/comunicacao-em-rede-aps/blob/master/CONTRIBUTING.md) para conferir as guidelines.
+Se deseja contribuir nesse repositório, veja o [CONTRIBUTING.md](https://github.com/Invokedzz/comunicacao-em-rede-aps/blob/master/CONTRIBUTING.md) para conferir nossas guidelines.
 
 ## Licença
 
