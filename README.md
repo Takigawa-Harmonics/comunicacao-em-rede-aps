@@ -15,7 +15,24 @@ Além da comunicação, outros elementos poderão ser acrescidos, tais como: com
 
 ## Setup do ambiente
 
+Esse projeto faz uso do .NET 8.0. Caso ainda não tiver instalado, faça o download da [SDK](https://dotnet.microsoft.com/en-us/download/dotnet/8.0).
+
+Depois disso, clone o repositório através do seguinte comando: 
+
+```
+git clone https://github.com/Invokedzz/comunicacao-em-rede-aps
+```
+
+Tendo realizado essa etapa, vá para a raiz do ``/ComunicacaoEmRedeApi`` e execute o comando para inicializar o projeto:
+
+```
+dotnet run
+```
+
+
 ## Como contribuir
+
+Se deseja contribuir nesse repositório, veja o [CONTRIBUTING.md](https://github.com/Invokedzz/comunicacao-em-rede-aps/blob/master/CONTRIBUTING.md) para conferir as guidelines.
 
 ## Licença
 
