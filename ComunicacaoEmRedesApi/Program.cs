@@ -1,4 +1,6 @@
 using ComunicacaoEmRedesApi.Domain.Repositories;
+using ComunicacaoEmRedesApi.Domain.Services;
+using ComunicacaoEmRedesApi.Domain.Services.Interfaces;
 using ComunicacaoEmRedesApi.Infrastructure.Data;
 using ComunicacaoEmRedesApi.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +14,8 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IChatRepository, ChatRepository>();
 builder.Services.AddScoped<IMessageRepository, MessageRepository>();
+
+builder.Services.AddScoped<ISessionService, SessionService>();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseInMemoryDatabase("memory"));
 
