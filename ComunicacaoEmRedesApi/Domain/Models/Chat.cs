@@ -9,8 +9,6 @@ public class Chat
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public Guid Id { get; set; }
     
-    [Required]
-    [StringLength(30)]
     public required string Title { get; set; }
 
     public bool Active { get; set; }

@@ -1,4 +1,5 @@
 using ComunicacaoEmRedesApi.Domain.Models;
+using ComunicacaoEmRedesApi.Infrastructure.Data.Configurations.Properties;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -8,6 +9,15 @@ public class MessageEntityTypeConfiguration : IEntityTypeConfiguration<Message>
 {
     public void Configure(EntityTypeBuilder<Message> builder)
     {
+        builder.ToTable(DefaultSchemaProperties.TableNames.MessageTable);
+        
+        builder.HasKey(e => e.Id);
+        
+        builder.Property(e => e.Id)
+            .HasColumnName(DefaultSchemaProperties.ColumnNames.IdColumnName)
+            .ValueGeneratedOnAdd()
+            .IsRequired();
+        
         builder.HasOne(e => e.Chat)
             .WithMany(e => e.Messages)
             .HasForeignKey(e => e.ChatId)
@@ -18,8 +28,17 @@ public class MessageEntityTypeConfiguration : IEntityTypeConfiguration<Message>
             .HasForeignKey(e => e.UserId)
             .HasPrincipalKey(e => e.Id);
 
-        builder.Property(e => e.Value)
-            .HasMaxLength(2000)
+        builder.Property(e => e.UserId)
+            .HasColumnName(DefaultSchemaProperties.ColumnNames.UserIdColumnName)
+            .IsRequired();
+        
+        builder.Property(e => e.ChatId)
+            .HasColumnName(DefaultSchemaProperties.ColumnNames.ChatIdColumnName)
+            .IsRequired();
+        
+        builder.Property(e => e.Content)
+            .HasColumnName(DefaultSchemaProperties.ColumnNames.ContentColumnName)
+            .HasMaxLength(DefaultSchemaProperties.ColumnProperties.ContentMaxLength)
             .IsRequired();
     }
 }

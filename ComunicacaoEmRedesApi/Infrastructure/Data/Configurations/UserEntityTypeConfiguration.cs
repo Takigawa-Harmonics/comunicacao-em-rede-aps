@@ -1,4 +1,5 @@
 using ComunicacaoEmRedesApi.Domain.Models;
+using ComunicacaoEmRedesApi.Infrastructure.Data.Configurations.Properties;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -8,6 +9,15 @@ public class UserEntityTypeConfiguration : IEntityTypeConfiguration<User>
 {
     public void Configure(EntityTypeBuilder<User> builder)
     {
+        builder.ToTable(DefaultSchemaProperties.TableNames.UserTable);
+        
+        builder.HasKey(e => e.Id);
+        
+        builder.Property(e => e.Id)
+            .HasColumnName(DefaultSchemaProperties.ColumnNames.IdColumnName)
+            .ValueGeneratedOnAdd()
+            .IsRequired();
+        
         builder.HasMany(e => e.Messages)
             .WithOne(e => e.User)
             .HasForeignKey(e => e.UserId)
@@ -17,11 +27,17 @@ public class UserEntityTypeConfiguration : IEntityTypeConfiguration<User>
             .WithMany(e => e.Users);
 
         builder.Property(e => e.Email)
-            .HasMaxLength(252)
+            .HasColumnName(DefaultSchemaProperties.ColumnNames.EmailColumnName)
+            .HasMaxLength(DefaultSchemaProperties.ColumnProperties.EmailMaxLength)
             .IsRequired();
 
         builder.Property(e => e.PasswordHash)
-            .HasMaxLength(60)
+            .HasColumnName(DefaultSchemaProperties.ColumnNames.PasswordColumnName)
+            .HasMaxLength(DefaultSchemaProperties.ColumnProperties.PasswordHashMaxLength)
             .IsRequired();
+
+        builder.Property(e => e.Active)
+            .HasColumnName(DefaultSchemaProperties.ColumnNames.ActiveColumnName)
+            .HasDefaultValue(false);
     }
 }
