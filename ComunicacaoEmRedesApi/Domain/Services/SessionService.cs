@@ -3,6 +3,7 @@ using ComunicacaoEmRedesApi.Application.Dtos;
 using ComunicacaoEmRedesApi.Domain.Enums;
 using ComunicacaoEmRedesApi.Domain.Models;
 using ComunicacaoEmRedesApi.Domain.Repositories;
+using ComunicacaoEmRedesApi.Domain.Results;
 using ComunicacaoEmRedesApi.Domain.Services.Interfaces;
 using ComunicacaoEmRedesApi.Infrastructure.Security.Interfaces;
 
@@ -19,37 +20,60 @@ public class SessionService : ISessionService
         _encryption = encryption;
     }
     
-    public async Task Register(RegisterRequestDto request)
+    public async Task<Result<RegisterResponseDto>> Register(RegisterRequestDto request)
     {
+        var getErrors = SessionDomainValidations.GetRegisterErrors(request.Email, request.Password);
+
+        if (getErrors.Count > 0)
+        {
+            return Result<RegisterResponseDto>.Failure(getErrors);
+        }
+
         var user = new User
         {
             Email = request.Email,
             PasswordHash = request.Password
         };
 
-        var hash = _encryption.HashPassword(user, user.PasswordHash);
-        Console.WriteLine(hash);
+        user.PasswordHash = HashUserPassword(user);
         
-        var isValid = SessionDomainValidations.IsEmailDomainValid(user.Email);
-        if (isValid)
-        {
-            Console.WriteLine("Nice one! User saved!");
-            await _userRepository.SaveUserAsync(user);
-            return;
-        }
-        
-        Console.WriteLine("Oops! Invalid email!");
+        await _userRepository.SaveUserAsync(user);
+        var response = RegisterResponseDto.Get(user.Email);
+
+        return Result<RegisterResponseDto>.Success(response);
     }
 
+    private string HashUserPassword(User user)
+    {
+        return _encryption.HashPassword(user, user.PasswordHash);
+    }
+    
     private static class SessionDomainValidations
     {
-        public static bool IsEmailDomainValid(string email)
+        public static List<string> GetRegisterErrors(string email, string password)
+        {
+            var errors = new List<string>();
+
+            if (!IsEmailDomainValid(email))
+            {
+                errors.Add("Email domain is not valid!");
+            }
+
+            if (!IsPasswordStructureValid(password))
+            {
+                errors.Add("Password must contain letters, numbers and a special character!");
+            }
+
+            return errors;
+        }
+        
+        private static bool IsEmailDomainValid(string email)
         {
             var providers = Enum.GetNames<AvailableEmailProviders>().Select(e => e.ToLower());
             return DoesEmailEndsWithDomain(email, providers);
         }
 
-        public static bool IsPasswordStructureValid(string password)
+        private static bool IsPasswordStructureValid(string password)
         {
             return SessionDomainRegex.PasswordDefaultPattern.IsMatch(password);
         }

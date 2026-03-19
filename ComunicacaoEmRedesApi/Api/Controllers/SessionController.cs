@@ -18,7 +18,13 @@ public class SessionController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequestDto request)
     {
-        await _sessionService.Register(request);
-        return Ok();
+        var response = await _sessionService.Register(request);
+        
+        if (response.IsSuccess)
+        {
+            return Ok(response);
+        }
+
+        return BadRequest(response);
     }
 }
