@@ -6,4 +6,5 @@ namespace ComunicacaoEmRedesApi.Domain.Services.Interfaces;
 public interface ISessionService
 {
     Task<Result<RegisterResponseDto>> Register(RegisterRequestDto request);
+    Task<Result<LoginResponseDto>> Login(LoginRequestDto request);
 }
