@@ -48,6 +48,11 @@ public class SessionService : ISessionService
         return Result<RegisterResponseDto>.Success(response);
     }
 
+    public Task<Result<LoginResponseDto>> Login(LoginRequestDto request)
+    {
+        throw new NotImplementedException();
+    }
+
     private async Task<bool> DoesRequestedEmailAlreadyExists(string email)
     {
         return await _userRepository.DoesEmailExists(email);

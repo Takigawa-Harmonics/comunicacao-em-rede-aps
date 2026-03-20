@@ -27,5 +27,6 @@ public class Error
         public const string InvalidEmail = "INVALID_EMAIL";
         public const string EmailAlreadyExists = "EMAIL_ALREADY_EXISTS";
         public const string InvalidPassword = "INVALID_PASSWORD";
+        public const string UserNotFound = "USER_NOT_FOUND";
     }
 }

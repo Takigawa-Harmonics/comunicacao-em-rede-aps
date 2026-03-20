@@ -27,10 +27,9 @@ public class UserRepository : IUserRepository
             .AnyAsync(e => e.Email == email);
     }
 
-    public async Task<Option<User>> GetUserByIdAsync(Guid id)
+    public async Task<Option<User>> GetUserByEmailAsync(string email)
     {
-        var user = await _context.Users.FirstOrDefaultAsync(e => e.Id == id);
-
+        var user = await _context.Users.FirstOrDefaultAsync(e => e.Email == email);
         return user is null ? Option<User>.None : Option<User>.Some(user);
     }
 }

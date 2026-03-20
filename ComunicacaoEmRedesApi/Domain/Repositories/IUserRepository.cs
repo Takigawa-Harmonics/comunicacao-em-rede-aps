@@ -7,5 +7,5 @@ public interface IUserRepository
 {
     Task SaveUserAsync(User user);
     Task<bool> DoesEmailExists(string email);
-    Task<Option<User>> GetUserByIdAsync(Guid id);
+    Task<Option<User>> GetUserByEmailAsync(string email);
 }
