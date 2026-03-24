@@ -18,6 +18,7 @@ public class UserRepository : IUserRepository
     public async Task SaveUserAsync(User user)
     {
         await _context.Users.AddAsync(user);
+        await _context.SaveChangesAsync(); // Change this asap
     }
 
     public async Task<bool> DoesEmailExists(string email)

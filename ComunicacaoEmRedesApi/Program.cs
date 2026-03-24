@@ -24,7 +24,7 @@ builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 
 builder.Services.AddScoped<ISessionService, SessionService>();
 
-builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseInMemoryDatabase("memory"));
+builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite("Data Source=" + Path.Combine(builder.Environment.ContentRootPath, "app.db")));
 
 var app = builder.Build();
 

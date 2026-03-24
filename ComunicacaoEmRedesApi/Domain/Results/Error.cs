@@ -29,4 +29,9 @@ public class Error
         public const string InvalidPassword = "INVALID_PASSWORD";
         public const string UserNotFound = "USER_NOT_FOUND";
     }
+
+    public struct Messages
+    {
+        public const string InvalidLoginMessage = "Invalid email or password!";
+    }
 }

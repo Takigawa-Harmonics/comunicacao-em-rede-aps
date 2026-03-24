@@ -21,6 +21,12 @@ public class SessionController : ControllerBase
     {
         var response = await _sessionService.Register(request);
         return Results.Extensions.ToResultFormat(response);
-    }        
+    }
 
+    [HttpPost("login")]
+    public async Task<IResult> Login([FromBody] LoginRequestDto request)
+    {
+        var response = await _sessionService.Login(request);
+        return Results.Extensions.ToResultFormat(response);
+    }
 }
