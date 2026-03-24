@@ -48,9 +48,26 @@ public class SessionService : ISessionService
         return Result<RegisterResponseDto>.Success(response);
     }
 
-    public Task<Result<LoginResponseDto>> Login(LoginRequestDto request)
+    public async Task<Result<LoginResponseDto>> Login(LoginRequestDto request)
     {
-        throw new NotImplementedException();
+        var lookForUser = await _userRepository.GetUserByEmailAsync(request.Email);
+        
+        if (lookForUser.IsNone)
+        {
+            var error = Error.Get(Error.Codes.UserNotFound, Error.Messages.InvalidLoginMessage);
+            return Result<LoginResponseDto>.Failure(ErrorType.NotFound, [error]);
+        }
+
+        var user = lookForUser.First();
+
+        if (!DoesRequestPasswordMatchesWithExistent(user, request.Password))
+        {
+            var error = Error.Get(Error.Codes.InvalidPassword, Error.Messages.InvalidLoginMessage);
+            return Result<LoginResponseDto>.Failure(ErrorType.BadRequest, [error]);
+        }
+
+        var response = LoginResponseDto.Get("", DateTime.Now);
+        return Result<LoginResponseDto>.Success(response);
     }
 
     private async Task<bool> DoesRequestedEmailAlreadyExists(string email)
@@ -61,6 +78,12 @@ public class SessionService : ISessionService
     private string HashUserPassword(User user)
     {
         return _encryption.HashPassword(user, user.PasswordHash);
+    }
+
+    private bool DoesRequestPasswordMatchesWithExistent(User user, string requestPassword)
+    {
+        if (string.IsNullOrEmpty(requestPassword)) return false;
+        return _encryption.VerifyPassword(user, user.PasswordHash, requestPassword);
     }
     
     private static class SessionDomainValidations

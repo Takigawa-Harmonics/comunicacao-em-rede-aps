@@ -4,13 +4,20 @@
         <TargetFramework>net8.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+        <UserSecretsId>1612dbb0-4919-4fc5-8798-a9062ef1a3c2</UserSecretsId>
     </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="LanguageExt.Core" Version="4.4.9" />
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.25" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.25">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
         <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.25" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.25" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.25" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
     </ItemGroup>
 
