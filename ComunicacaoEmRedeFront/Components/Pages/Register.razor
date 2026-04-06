@@ -1,6 +1,7 @@
 ﻿@page "/register"
 @rendermode InteractiveServer
 @inject NavigationManager Nav
+@inject HttpClient Http
 
 <h3>Registro</h3>
 
@@ -8,6 +9,14 @@
 <br />
 <input type="password" placeholder="Senha" @bind="senha" />
 <br />
+@if (!string.IsNullOrEmpty(erro))
+{
+    <p style="color:red">@erro</p>
+}
+@if (!string.IsNullOrEmpty(sucesso))
+{
+    <p style="color:green">@sucesso</p>
+}
 <br />
 
 <button @onclick="Registrar">Registrar</button>
@@ -15,9 +24,24 @@
 @code {
     string email = "";
     string senha = "";
+    string erro = "";
+    string sucesso = "";
 
-    void Registrar()
+    async Task Registrar()
     {
-        Nav.NavigateTo("/chat");
+        var payload = new { email, password = senha };
+        var response = await Http.PostAsJsonAsync("/v1/session/register", payload);
+
+        if (response.IsSuccessStatusCode)
+        {
+            sucesso = "Conta criada com sucesso!";
+            await Task.Delay(1500);
+            Nav.NavigateTo("/login");
+        }
+        else
+        {
+            var body = await response.Content.ReadAsStringAsync();
+            erro = "Erro ao registrar. Verifique os dados.";
+        }
     }
 }
