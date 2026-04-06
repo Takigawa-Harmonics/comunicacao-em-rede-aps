@@ -2,11 +2,13 @@ using ComunicacaoEmRedesApi.Application.Dtos;
 using ComunicacaoEmRedesApi.Application.Extensions;
 using ComunicacaoEmRedesApi.Domain.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;  
 
 namespace ComunicacaoEmRedesApi.Api.Controllers;
 
 [ApiController]
 [Route("/v1/session")]
+[EnableRateLimiting("fixed")]  
 public class SessionController : ControllerBase
 {
     private readonly ISessionService _sessionService;
