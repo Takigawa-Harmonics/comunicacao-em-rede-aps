@@ -1,0 +1,30 @@
+﻿@page "/chat"
+@rendermode InteractiveServer
+
+<h3>Chat</h3>
+
+<div style="border:1px solid black; height:200px; padding:10px; overflow:auto;">
+    @foreach (var msg in mensagens)
+    {
+        <p>@msg</p>
+    }
+</div>
+
+<br />
+
+<input @bind="mensagem" placeholder="Digite sua mensagem..." />
+<button @onclick="Enviar">Enviar</button>
+
+@code {
+    string mensagem = "";
+    List<string> mensagens = new();
+
+    void Enviar()
+    {
+        if (!string.IsNullOrWhiteSpace(mensagem))
+        {
+            mensagens.Add(mensagem);
+            mensagem = "";
+        }
+    }
+}
