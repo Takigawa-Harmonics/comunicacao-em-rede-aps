@@ -1,0 +1,23 @@
+﻿@page "/login"
+@rendermode InteractiveServer
+@inject NavigationManager Nav
+
+<h3>Login</h3>
+
+<input placeholder="Email" @bind="email" />
+<br />
+<input type="password" placeholder="Senha" @bind="senha" />
+<br />
+<br />
+
+<button @onclick="Entrar">Entrar</button>
+
+@code {
+    string email = "";
+    string senha = "";
+
+    void Entrar()
+    {
+        Nav.NavigateTo("/chat");
+    }
+}

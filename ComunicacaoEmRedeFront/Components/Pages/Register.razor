@@ -1,0 +1,23 @@
+﻿@page "/register"
+@rendermode InteractiveServer
+@inject NavigationManager Nav
+
+<h3>Registro</h3>
+
+<input placeholder="Email" @bind="email" />
+<br />
+<input type="password" placeholder="Senha" @bind="senha" />
+<br />
+<br />
+
+<button @onclick="Registrar">Registrar</button>
+
+@code {
+    string email = "";
+    string senha = "";
+
+    void Registrar()
+    {
+        Nav.NavigateTo("/chat");
+    }
+}
