@@ -1,6 +1,7 @@
 ﻿@page "/login"
 @rendermode InteractiveServer
 @inject NavigationManager Nav
+@inject HttpClient Http
 
 <h3>Login</h3>
 
@@ -8,6 +9,10 @@
 <br />
 <input type="password" placeholder="Senha" @bind="senha" />
 <br />
+@if (!string.IsNullOrEmpty(erro))
+{
+    <p style="color:red">@erro</p>
+}
 <br />
 
 <button @onclick="Entrar">Entrar</button>
@@ -15,9 +20,20 @@
 @code {
     string email = "";
     string senha = "";
+    string erro = "";
 
-    void Entrar()
+    async Task Entrar()
     {
-        Nav.NavigateTo("/chat");
+        var payload = new { email, password = senha };
+        var response = await Http.PostAsJsonAsync("/v1/session/login", payload);
+
+        if (response.IsSuccessStatusCode)
+        {
+            Nav.NavigateTo("/chat");
+        }
+        else
+        {
+            erro = "Email ou senha inválidos.";
+        }
     }
 }
