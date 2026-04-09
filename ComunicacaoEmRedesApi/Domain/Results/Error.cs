@@ -28,10 +28,12 @@ public class Error
         public const string EmailAlreadyExists = "EMAIL_ALREADY_EXISTS";
         public const string InvalidPassword = "INVALID_PASSWORD";
         public const string UserNotFound = "USER_NOT_FOUND";
+        public const string RequestLimitAchieved = "TOO_MANY_REQUESTS";
     }
 
     public struct Messages
     {
         public const string InvalidLoginMessage = "Invalid email or password!";
+        public const string RequestLimitAchievedMessage = "Something went wrong. Please, try again later!";
     }
 }
