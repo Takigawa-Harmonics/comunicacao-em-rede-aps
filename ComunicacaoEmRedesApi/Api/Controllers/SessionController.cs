@@ -1,5 +1,6 @@
 using ComunicacaoEmRedesApi.Application.Dtos;
 using ComunicacaoEmRedesApi.Application.Extensions;
+using ComunicacaoEmRedesApi.Domain.Enums;
 using ComunicacaoEmRedesApi.Domain.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;  
@@ -8,7 +9,6 @@ namespace ComunicacaoEmRedesApi.Api.Controllers;
 
 [ApiController]
 [Route("/v1/session")]
-[EnableRateLimiting("fixed")]  
 public class SessionController : ControllerBase
 {
     private readonly ISessionService _sessionService;
@@ -26,6 +26,7 @@ public class SessionController : ControllerBase
     }
 
     [HttpPost("login")]
+    [EnableRateLimiting(nameof(RateLimiterPolicies.SessionPolicy))]  
     public async Task<IResult> Login([FromBody] LoginRequestDto request)
     {
         var response = await _sessionService.Login(request);

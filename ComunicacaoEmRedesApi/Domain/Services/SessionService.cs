@@ -65,8 +65,8 @@ public class SessionService : ISessionService
             var error = Error.Get(Error.Codes.InvalidPassword, Error.Messages.InvalidLoginMessage);
             return Result<LoginResponseDto>.Failure(ErrorType.BadRequest, [error]);
         }
-
-        var response = LoginResponseDto.Get("", DateTime.Now);
+        
+        var response = LoginResponseDto.Get($"Welcome, {user.Email.ToUpper()}", DateTime.UtcNow);
         return Result<LoginResponseDto>.Success(response);
     }
 

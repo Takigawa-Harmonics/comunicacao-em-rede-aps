@@ -12,7 +12,7 @@ public class LoginResponseDto
     public string? Message { get; set; }
     
     [JsonPropertyName("login_at")]
-    public DateTime LoginAt { get; } = DateTime.Now;
+    public DateTime LoginAt { get; } = DateTime.UtcNow;
     
     [JsonPropertyName("last_login_made_at")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
