@@ -24,6 +24,7 @@ builder.Services.AddScoped<IPasswordEncryption, PasswordEncryption>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IChatRepository, ChatRepository>();
 builder.Services.AddScoped<IMessageRepository, MessageRepository>();
+builder.Services.AddScoped<ITokenRepository, TokenRepository>();
 
 builder.Services.AddScoped<ISessionService, SessionService>();
 

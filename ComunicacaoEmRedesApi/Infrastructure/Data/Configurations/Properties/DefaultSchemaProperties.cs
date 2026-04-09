@@ -8,6 +8,7 @@ public struct DefaultSchemaProperties
         public const string ChatTable = "chats";
         public const string MessageTable = "messages";
         public const string UserChatTable = "user_chats";
+        public const string TokenSessionTable = "session_tokens";
     }
     
     public struct ColumnNames
@@ -27,6 +28,10 @@ public struct DefaultSchemaProperties
         
         // Chat columns
         public const string TitleColumnName = "title";
+        
+        public const string TokenValueColumnName = "hash_token";
+        public const string IsRevokedColumnName = "is_revoked";
+        public const string ExpirationColumnName = "expires_at";
     }
 
     public struct ColumnProperties
@@ -40,5 +45,7 @@ public struct DefaultSchemaProperties
         
         // Chat column properties
         public const int TitleMaxLength = 30;
+        
+        public const int TokenValueMaxLength = 70;
     }
 }
