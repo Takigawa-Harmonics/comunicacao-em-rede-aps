@@ -18,6 +18,7 @@ public class TokenRepository : ITokenRepository
     public async Task SaveTokenAsync(Token token)
     {
         await _context.Tokens.AddAsync(token);
+        await _context.SaveChangesAsync();
     }
 
     public async Task<Option<Token>> GetTokenByUserId(Guid userId)
@@ -26,6 +27,16 @@ public class TokenRepository : ITokenRepository
         return token is null ? Option<Token>.None : Option<Token>.Some(token);
     }
 
+    public async Task DeleteTokenByUserId(Guid userId)
+    {
+        var token = await GetTokenByUserId(userId);
+        if (token.IsSome)
+        {
+            _context.Tokens.Remove(token.First());
+            await _context.SaveChangesAsync();
+        }
+    }
+    
     public async Task RevokeTokenByUserId(Guid userId)
     {
         var token = await GetTokenByUserId(userId);

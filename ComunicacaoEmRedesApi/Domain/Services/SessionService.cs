@@ -11,11 +11,13 @@ namespace ComunicacaoEmRedesApi.Domain.Services;
 public class SessionService : ISessionService
 {
     private readonly IUserRepository _userRepository;
+    private readonly ITokenService _tokenService;
     private readonly IPasswordEncryption _encryption;
 
-    public SessionService(IUserRepository userRepository, IPasswordEncryption encryption)
+    public SessionService(IUserRepository userRepository, ITokenService tokenService, IPasswordEncryption encryption)
     {
         _userRepository = userRepository;
+        _tokenService = tokenService;
         _encryption = encryption;
     }
     
@@ -65,6 +67,8 @@ public class SessionService : ISessionService
             var error = Error.Get(Error.Codes.InvalidPassword, Error.Messages.InvalidLoginMessage);
             return Result<LoginResponseDto>.Failure(ErrorType.BadRequest, [error]);
         }
+
+        await _tokenService.ManageTokenCreationFlow(user.Id);
         
         var response = LoginResponseDto.Get($"Welcome, {user.Email.ToUpper()}", DateTime.UtcNow);
         return Result<LoginResponseDto>.Success(response);
