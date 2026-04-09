@@ -8,6 +8,7 @@ public class ApplicationDbContext : DbContext
     public virtual DbSet<User> Users { get; set; }
     public DbSet<Chat> Chats { get; set; }
     public DbSet<Message> Messages { get; set; }
+    public DbSet<Token> Tokens { get; set; }
     
     public ApplicationDbContext(DbContextOptions options) : base(options)
     {

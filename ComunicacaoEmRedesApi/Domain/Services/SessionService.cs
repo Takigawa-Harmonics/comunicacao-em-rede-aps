@@ -4,6 +4,7 @@ using ComunicacaoEmRedesApi.Domain.Models;
 using ComunicacaoEmRedesApi.Domain.Repositories;
 using ComunicacaoEmRedesApi.Domain.Results;
 using ComunicacaoEmRedesApi.Domain.Services.Interfaces;
+using ComunicacaoEmRedesApi.Infrastructure.Security;
 using ComunicacaoEmRedesApi.Infrastructure.Security.Interfaces;
 
 namespace ComunicacaoEmRedesApi.Domain.Services;
@@ -11,11 +12,13 @@ namespace ComunicacaoEmRedesApi.Domain.Services;
 public class SessionService : ISessionService
 {
     private readonly IUserRepository _userRepository;
+    private readonly ITokenRepository _tokenRepository;
     private readonly IPasswordEncryption _encryption;
 
-    public SessionService(IUserRepository userRepository, IPasswordEncryption encryption)
+    public SessionService(IUserRepository userRepository, ITokenRepository tokenRepository, IPasswordEncryption encryption)
     {
         _userRepository = userRepository;
+        _tokenRepository = tokenRepository;
         _encryption = encryption;
     }
     
