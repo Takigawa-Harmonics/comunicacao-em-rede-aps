@@ -7,4 +7,5 @@ public interface ISessionService
 {
     Task<Result<RegisterResponseDto>> Register(RegisterRequestDto request);
     Task<Result<LoginResponseDto>> Login(LoginRequestDto request);
+    Task Logout(Guid userId);
 }
