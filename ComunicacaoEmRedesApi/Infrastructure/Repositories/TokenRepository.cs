@@ -23,7 +23,10 @@ public class TokenRepository : ITokenRepository
 
     public async Task<Option<Token>> GetTokenByUserId(Guid userId)
     {
-        var token = await _context.Tokens.FirstOrDefaultAsync(e => e.UserId == userId);
+        var token = await _context.Tokens
+            .AsNoTracking()
+            .FirstOrDefaultAsync(e => e.UserId == userId);
+        
         return token is null ? Option<Token>.None : Option<Token>.Some(token);
     }
 

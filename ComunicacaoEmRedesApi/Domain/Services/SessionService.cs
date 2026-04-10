@@ -46,7 +46,7 @@ public class SessionService : ISessionService
         
         await _userRepository.SaveUserAsync(user);
         var response = RegisterResponseDto.Get(user.Email);
-
+        
         return Result<RegisterResponseDto>.Success(response);
     }
 
@@ -68,10 +68,15 @@ public class SessionService : ISessionService
             return Result<LoginResponseDto>.Failure(ErrorType.BadRequest, [error]);
         }
 
-        await _tokenService.ManageTokenCreationFlow(user.Id);
+        var token = await _tokenService.ManageTokenCreationFlow(user.Id);
         
-        var response = LoginResponseDto.Get($"Welcome, {user.Email.ToUpper()}", DateTime.UtcNow);
+        var response = LoginResponseDto.Get($"Welcome, {user.Email.ToUpper()}", token, DateTime.UtcNow);
         return Result<LoginResponseDto>.Success(response);
+    }
+
+    public async Task Logout(Guid userId)
+    {
+        await _tokenService.SetTokenAsRevoked(userId);
     }
 
     private async Task<bool> DoesRequestedEmailAlreadyExists(string email)

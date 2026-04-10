@@ -30,6 +30,20 @@ public class SessionController : ControllerBase
     public async Task<IResult> Login([FromBody] LoginRequestDto request)
     {
         var response = await _sessionService.Login(request);
+        Response.Cookies.Append(nameof(AvailableCookies.SessionToken), response.Value!.Token.Value, new CookieOptions
+        {
+            HttpOnly = true,
+            SameSite = SameSiteMode.Lax,
+            Expires = response.Value.Token.Expiration
+        });
+        Console.WriteLine(Request.Cookies[nameof(AvailableCookies.SessionToken)]);
         return Results.Extensions.ToResultFormat(response);
+    }
+
+    [HttpPost("/logout")]
+    public async Task Logout(Guid userId)
+    {
+        await _sessionService.Logout(userId);
+        Response.Cookies.Delete(nameof(AvailableCookies.SessionToken));
     }
 }

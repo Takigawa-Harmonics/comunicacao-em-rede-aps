@@ -14,13 +14,13 @@ public class TokenService : ITokenService
         _tokenRepository = tokenRepository;
     }
     
-    public async Task ManageTokenCreationFlow(Guid userId)
+    public async Task<Token> ManageTokenCreationFlow(Guid userId)
     {
         var searchForToken = await _tokenRepository.GetTokenByUserId(userId);
         
         if (searchForToken.IsNone)
         {
-            await RegisterNewTokenForSession(userId);
+            return await RegisterNewTokenForSession(userId);
         }
          
         if (searchForToken.IsSome)
@@ -30,16 +30,29 @@ public class TokenService : ITokenService
             if (token.Expiration < DateTime.UtcNow || token.IsRevoked)
             {
                 await DeleteTokenFromOldSession(userId);
-                await RegisterNewTokenForSession(userId);
-            } 
+            }
+            else
+            {
+                return token;
+            }
         }
+        
+        return await RegisterNewTokenForSession(userId);
     }
-    
-    private async Task RegisterNewTokenForSession(Guid userId)
+
+    public async Task SetTokenAsRevoked(Guid userId)
+    {
+        await _tokenRepository.RevokeTokenByUserId(userId);
+    }
+
+    private async Task<Token> RegisterNewTokenForSession(Guid userId)
     {
         var value = SessionTokenGenerator.Generate();
         var token = Token.Get(userId, value);
+        
         await _tokenRepository.SaveTokenAsync(token);
+        
+        return token;
     }
 
     private async Task DeleteTokenFromOldSession(Guid userId)
