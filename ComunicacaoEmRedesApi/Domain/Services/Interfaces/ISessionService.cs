@@ -1,4 +1,4 @@
-using ComunicacaoEmRedesApi.Application.Dtos;
+using ComunicacaoEmRedesApi.Application.Dtos.Session;
 using ComunicacaoEmRedesApi.Domain.Results;
 
 namespace ComunicacaoEmRedesApi.Domain.Services.Interfaces;

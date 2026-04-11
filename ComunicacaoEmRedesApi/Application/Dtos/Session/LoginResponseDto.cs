@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
 using ComunicacaoEmRedesApi.Domain.Models;
 
-namespace ComunicacaoEmRedesApi.Application.Dtos;
+namespace ComunicacaoEmRedesApi.Application.Dtos.Session;
 
 public class LoginResponseDto
 {
