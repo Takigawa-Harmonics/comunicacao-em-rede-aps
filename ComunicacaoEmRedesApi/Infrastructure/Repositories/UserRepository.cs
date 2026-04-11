@@ -14,7 +14,7 @@ public class UserRepository : IUserRepository
     {
         _context = context;
     }
-    
+
     public async Task SaveUserAsync(User user)
     {
         await _context.Users.AddAsync(user);
@@ -33,7 +33,17 @@ public class UserRepository : IUserRepository
         var user = await _context.Users
             .AsNoTracking()
             .FirstOrDefaultAsync(e => e.Email == email);
-        
+
+        return user is null ? Option<User>.None : Option<User>.Some(user);
+    }
+
+    public async Task<Option<User>> GetProfileByIdAsync(Guid userId)
+    {
+        var user = await _context.Users
+            .AsNoTracking()
+            .Include(e => e.Chats)
+            .FirstOrDefaultAsync(e => e.Id == userId);
+
         return user is null ? Option<User>.None : Option<User>.Some(user);
     }
 }

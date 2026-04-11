@@ -1,4 +1,4 @@
-using ComunicacaoEmRedesApi.Application.Dtos;
+using ComunicacaoEmRedesApi.Application.Dtos.Session;
 using ComunicacaoEmRedesApi.Application.Extensions;
 using ComunicacaoEmRedesApi.Domain.Enums;
 using ComunicacaoEmRedesApi.Domain.Services.Interfaces;
