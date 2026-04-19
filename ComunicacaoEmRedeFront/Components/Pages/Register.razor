@@ -40,6 +40,7 @@
         }
         else
         {
+            var body = await response.Content.ReadAsStringAsync();
             erro = "Erro ao registrar. Verifique os dados.";
         }
     }

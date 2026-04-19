@@ -30,6 +30,14 @@ public class TokenRepository : ITokenRepository
         return token is null ? Option<Token>.None : Option<Token>.Some(token);
     }
 
+    public async Task<Option<Token>> GetTokenByValue(string value)
+    {
+        var token = await _context.Tokens
+            .AsNoTracking()
+            .FirstOrDefaultAsync(e => e.Value == value);
+        
+        return token is null ? Option<Token>.None : Option<Token>.Some(token);
+    }
     public async Task DeleteTokenByUserId(Guid userId)
     {
         var token = await GetTokenByUserId(userId);

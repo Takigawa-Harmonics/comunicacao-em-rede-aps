@@ -1,30 +1,161 @@
-﻿@page "/chat"
+@page "/chat"
 @rendermode InteractiveServer
+@inject NavigationManager Nav
+@inject HttpClient Http
+@implements IAsyncDisposable
 
 <h3>Chat</h3>
 
-<div style="border:1px solid black; height:200px; padding:10px; overflow:auto;">
-    @foreach (var msg in mensagens)
-    {
-        <p>@msg</p>
-    }
-</div>
+@if (carregando)
+{
+    <p>Carregando...</p>
+}
+else if (!conectado)
+{
+    <p>Conectando ao chat...</p>
+}
+else
+{
+    <div style="border:1px solid #ccc; height:400px; overflow-y:auto; padding:10px; margin-bottom:10px;">
+        @foreach (var msg in mensagens)
+        {
+            <p>@msg</p>
+        }
+    </div>
 
-<br />
+    <input @bind="textoMensagem" @onkeydown="OnKeyDown" placeholder="Digite uma mensagem..." style="width:80%" />
+    <button @onclick="EnviarMensagem">Enviar</button>
+}
 
-<input @bind="mensagem" placeholder="Digite sua mensagem..." />
-<button @onclick="Enviar">Enviar</button>
+@if (!string.IsNullOrEmpty(erro))
+{
+    <p style="color:red">@erro</p>
+}
 
 @code {
-    string mensagem = "";
-    List<string> mensagens = new();
+    private System.Net.Sockets.TcpClient? _tcpClient;
+    private System.Net.Sockets.NetworkStream? _stream;
+    private CancellationTokenSource _cts = new();
 
-    void Enviar()
+    private List<string> mensagens = new();
+    private string textoMensagem = "";
+    private string erro = "";
+    private bool conectado = false;
+    private bool carregando = true;
+
+    private Guid userId;
+    private string email = "";
+    private Guid chatId = Guid.Parse("00000000-0000-0000-0000-000000000001");
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!string.IsNullOrWhiteSpace(mensagem))
+        if (firstRender)
         {
-            mensagens.Add(mensagem);
-            mensagem = "";
+            await CarregarUsuarioAsync();
         }
     }
+
+    private async Task CarregarUsuarioAsync()
+    {
+        try
+        {
+            var response = await Http.GetAsync("/v1/session/me");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                Nav.NavigateTo("/login");
+                return;
+            }
+
+            var data = await response.Content.ReadFromJsonAsync<MeResponse>();
+            userId = data!.Id;
+            email = data.Email;
+
+            carregando = false;
+            StateHasChanged();
+
+            await ConectarAsync();
+        }
+        catch (Exception ex)
+        {
+            erro = $"Erro ao carregar sessão: {ex.Message}";
+            carregando = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ConectarAsync()
+    {
+        try
+        {
+            _tcpClient = new System.Net.Sockets.TcpClient();
+            await _tcpClient.ConnectAsync("localhost", 5002);
+            _stream = _tcpClient.GetStream();
+
+            var auth = System.Text.Json.JsonSerializer.Serialize(new
+            {
+                UserId = userId,
+                Email = email,
+                ChatId = chatId
+            });
+            var authBytes = System.Text.Encoding.UTF8.GetBytes(auth);
+            await _stream.WriteAsync(authBytes, _cts.Token);
+
+            conectado = true;
+            StateHasChanged();
+
+            _ = ReceberMensagensAsync();
+        }
+        catch (Exception ex)
+        {
+            erro = $"Erro ao conectar: {ex.Message}";
+            StateHasChanged();
+        }
+    }
+
+    private async Task ReceberMensagensAsync()
+    {
+        var buffer = new byte[4096];
+        try
+        {
+            while (!_cts.Token.IsCancellationRequested && _stream is not null)
+            {
+                int bytesRead = await _stream.ReadAsync(buffer, _cts.Token);
+                if (bytesRead == 0) break;
+
+                var msg = System.Text.Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                mensagens.Add(msg);
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (OperationCanceledException) { }
+        catch (Exception ex)
+        {
+            erro = $"Conexão encerrada: {ex.Message}";
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task EnviarMensagem()
+    {
+        if (string.IsNullOrWhiteSpace(textoMensagem) || _stream is null) return;
+
+        var bytes = System.Text.Encoding.UTF8.GetBytes(textoMensagem);
+        await _stream.WriteAsync(bytes, _cts.Token);
+        textoMensagem = "";
+    }
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await EnviarMensagem();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await _cts.CancelAsync();
+        _stream?.Close();
+        _tcpClient?.Close();
+    }
+
+    private record MeResponse(Guid Id, string Email);
 }

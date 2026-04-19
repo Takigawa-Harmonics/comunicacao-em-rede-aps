@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using ComunicacaoEmRedesApi.Domain.Enums;
 using ComunicacaoEmRedesApi.Domain.Results;
+using ComunicacaoEmRedesApi.Infrastructure.Socket;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -52,6 +53,7 @@ builder.Services.AddRateLimiter(options =>
     };
 });
 
+builder.Services.AddHostedService<ChatSocketServer>();
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
