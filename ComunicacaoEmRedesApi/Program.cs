@@ -1,3 +1,4 @@
+using ComunicacaoEmRedesApi.Api.Sockets;
 using ComunicacaoEmRedesApi.Domain.Models;
 using ComunicacaoEmRedesApi.Domain.Repositories;
 using ComunicacaoEmRedesApi.Domain.Services;
@@ -30,6 +31,7 @@ builder.Services.AddScoped<ITokenRepository, TokenRepository>();
 builder.Services.AddScoped<ISessionService, SessionService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IChatService, ChatService>();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite("Data Source=" + Path.Combine(builder.Environment.ContentRootPath, "app.db")));
 
@@ -53,6 +55,7 @@ builder.Services.AddRateLimiter(options =>
     };
 });
 
+builder.Services.AddScoped<ChatWebSocketHandler>();
 builder.Services.AddHostedService<ChatSocketServer>();
 var app = builder.Build();
 
@@ -62,12 +65,18 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+app.UseWebSockets();
+
+app.MapControllers();
+
+app.Map("/ws/chat", async context =>
+{
+    var handler = context.RequestServices.GetRequiredService<ChatWebSocketHandler>();
+    await handler.HandleAsync(context);
+});
 
 app.UseAuthorization();
 
 app.UseRateLimiter();
-
-app.MapControllers();
 
 app.Run();

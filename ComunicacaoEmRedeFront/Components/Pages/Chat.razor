@@ -2,6 +2,8 @@
 @rendermode InteractiveServer
 @inject NavigationManager Nav
 @inject HttpClient Http
+@using System.Net.WebSockets
+@using System.Text
 @implements IAsyncDisposable
 
 <h3>Chat</h3>
@@ -33,7 +35,7 @@ else
 }
 
 @code {
-    private System.Net.Sockets.TcpClient? _tcpClient;
+    private ClientWebSocket? _ws;
     private System.Net.Sockets.NetworkStream? _stream;
     private CancellationTokenSource _cts = new();
 
@@ -88,9 +90,16 @@ else
     {
         try
         {
-            _tcpClient = new System.Net.Sockets.TcpClient();
-            await _tcpClient.ConnectAsync("localhost", 5002);
-            _stream = _tcpClient.GetStream();
+            _ws = new ClientWebSocket();
+
+            var httpUri = Nav.ToAbsoluteUri("ws://localhost:5165/ws/chat");
+
+            var wsUri = new UriBuilder(httpUri)
+            {
+                Scheme = httpUri.Scheme == "https" ? "wss" : "ws"
+            }.Uri;
+            
+            await _ws.ConnectAsync(wsUri, _cts.Token);
 
             var auth = System.Text.Json.JsonSerializer.Serialize(new
             {
@@ -98,8 +107,9 @@ else
                 Email = email,
                 ChatId = chatId
             });
-            var authBytes = System.Text.Encoding.UTF8.GetBytes(auth);
-            await _stream.WriteAsync(authBytes, _cts.Token);
+
+            var authBytes = Encoding.UTF8.GetBytes(auth);
+            await _ws.SendAsync(authBytes, WebSocketMessageType.Text, true, _cts.Token);
 
             conectado = true;
             StateHasChanged();
@@ -116,32 +126,38 @@ else
     private async Task ReceberMensagensAsync()
     {
         var buffer = new byte[4096];
+
         try
         {
-            while (!_cts.Token.IsCancellationRequested && _stream is not null)
+            while (_ws is not null && _ws.State == WebSocketState.Open)
             {
-                int bytesRead = await _stream.ReadAsync(buffer, _cts.Token);
-                if (bytesRead == 0) break;
+                var result = await _ws.ReceiveAsync(buffer, _cts.Token);
 
-                var msg = System.Text.Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                if (result.MessageType == WebSocketMessageType.Close)
+                    break;
+
+                var msg = Encoding.UTF8.GetString(buffer, 0, result.Count);
+
                 mensagens.Add(msg);
                 await InvokeAsync(StateHasChanged);
             }
         }
-        catch (OperationCanceledException) { }
         catch (Exception ex)
         {
-            erro = $"Conexão encerrada: {ex.Message}";
+            erro = $"Erro na conexão: {ex.Message}";
             await InvokeAsync(StateHasChanged);
         }
     }
 
     private async Task EnviarMensagem()
     {
-        if (string.IsNullOrWhiteSpace(textoMensagem) || _stream is null) return;
+        if (string.IsNullOrWhiteSpace(textoMensagem) || _ws is null)
+            return;
 
-        var bytes = System.Text.Encoding.UTF8.GetBytes(textoMensagem);
-        await _stream.WriteAsync(bytes, _cts.Token);
+        var bytes = Encoding.UTF8.GetBytes(textoMensagem);
+
+        await _ws.SendAsync(bytes, WebSocketMessageType.Text, true, _cts.Token);
+
         textoMensagem = "";
     }
 
@@ -152,9 +168,13 @@ else
 
     public async ValueTask DisposeAsync()
     {
-        await _cts.CancelAsync();
-        _stream?.Close();
-        _tcpClient?.Close();
+        _cts.Cancel();
+
+        if (_ws is not null)
+        {
+            await _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Dispose", CancellationToken.None);
+            _ws.Dispose();
+        }
     }
 
     private record MeResponse(Guid Id, string Email);

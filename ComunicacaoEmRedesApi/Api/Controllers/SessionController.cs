@@ -46,32 +46,32 @@ public class SessionController : ControllerBase
     }
 
     [HttpGet("me")]
-public async Task<IResult> Me()
-{
-    var cookieValue = Request.Cookies[nameof(AvailableCookies.SessionToken)];
+    public async Task<IResult> Me()
+    {
+        var cookieValue = Request.Cookies[nameof(AvailableCookies.SessionToken)];
 
-    if (string.IsNullOrEmpty(cookieValue))
-        return Results.Unauthorized();
+        if (string.IsNullOrEmpty(cookieValue))
+            return Results.Unauthorized();
 
-    var tokenOption = await _tokenRepository.GetTokenByValue(cookieValue);
+        var tokenOption = await _tokenRepository.GetTokenByValue(cookieValue);
 
-    if (tokenOption.IsNone)
-        return Results.Unauthorized();
+        if (tokenOption.IsNone)
+            return Results.Unauthorized();
 
-    var token = tokenOption.First();
+        var token = tokenOption.First();
 
-    if (token.IsRevoked || token.Expiration < DateTime.UtcNow)
-        return Results.Unauthorized();
+        if (token.IsRevoked || token.Expiration < DateTime.UtcNow)
+            return Results.Unauthorized();
 
-    var userOption = await _userRepository.GetProfileByIdAsync(token.UserId);
+        var userOption = await _userRepository.GetProfileByIdAsync(token.UserId);
 
-    if (userOption.IsNone)
-        return Results.Unauthorized();
+        if (userOption.IsNone)
+            return Results.Unauthorized();
 
-    var user = userOption.First();
+        var user = userOption.First();
 
-    return Results.Ok(new { user.Id, user.Email });
-}
+        return Results.Ok(new { user.Id, user.Email });
+    }
 
     [HttpPost("/logout")]
     public async Task Logout(Guid userId)
