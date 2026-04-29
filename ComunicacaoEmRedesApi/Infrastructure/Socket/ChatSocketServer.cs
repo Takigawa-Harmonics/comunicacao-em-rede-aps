@@ -96,7 +96,6 @@ public class ChatSocketServer : BackgroundService
 
                 if (headerCheck.StartsWith("FILE:"))
                 {
-                    // Formato: FILE:nomeDoArquivo:tamanhoEmBytes\n[bytes do arquivo]
                     var newlineIndex = headerCheck.IndexOf('\n');
                     if (newlineIndex < 0) continue;
 
@@ -195,7 +194,8 @@ public class ChatSocketServer : BackgroundService
                 Content = content,
                 Active = true,
                 ChatId = chatId,
-                UserId = userId
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
             };
             await messageRepo.SaveMessageAsync(message);
         });

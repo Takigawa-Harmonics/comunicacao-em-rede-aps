@@ -7,7 +7,9 @@
 <div class="chat-wrapper">
     <div class="chat-header">
         <div class="header-left">
-            <span class="header-icon">🌊</span>
+            <div class="header-icon-wrapper">
+                <div class="header-dot"></div>
+            </div>
             <div>
                 <h1 class="header-title">Sistema de Monitoramento</h1>
                 <p class="header-subtitle">Rio Tietê — Canal de Comunicação das Equipes</p>
@@ -41,7 +43,6 @@
                 @if (mensagens.Count == 0)
                 {
                     <div class="empty-state">
-                        <span>🌿</span>
                         <p>Nenhuma mensagem ainda. Inicie a comunicação com sua equipe.</p>
                     </div>
                 }
@@ -50,7 +51,6 @@
                     @if (msg.IsFile)
                     {
                         <div class="message-bubble file-message">
-                            <span class="file-icon">📎</span>
                             <div class="file-info">
                                 <span class="file-sender">@msg.Sender</span>
                                 <a class="file-link" href="@msg.FileDataUrl" download="@msg.FileName">@msg.FileName</a>
@@ -106,7 +106,8 @@
     }
 
     .header-left { display: flex; align-items: center; gap: 14px; }
-    .header-icon { font-size: 2rem; filter: drop-shadow(0 0 8px rgba(0,200,255,0.6)); }
+    .header-icon-wrapper { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; background: rgba(0,180,200,0.15); border: 1px solid rgba(0,180,200,0.3); }
+    .header-dot { width: 10px; height: 10px; border-radius: 50%; background: #00e5ff; box-shadow: 0 0 8px #00e5ff; }
     .header-title { color: #e0f7ff; font-size: 1.2rem; font-weight: 700; }
     .header-subtitle { color: rgba(160,220,240,0.8); font-size: 0.78rem; margin-top: 2px; }
 
@@ -159,7 +160,6 @@
         align-items: center; justify-content: center; gap: 12px;
         color: rgba(160,220,240,0.5); font-size: 0.9rem;
     }
-    .empty-state span { font-size: 2rem; }
 
     .message-bubble { padding: 10px 14px; border-radius: 10px; max-width: 80%; animation: fadeIn 0.2s ease; }
     @@keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
@@ -176,7 +176,6 @@
         display: flex; align-items: center; gap: 10px;
     }
 
-    .file-icon { font-size: 1.4rem; }
     .file-info { display: flex; flex-direction: column; gap: 2px; }
     .file-sender { font-size: 0.75rem; color: rgba(160,220,240,0.7); }
     .file-link { color: #00e5ff; text-decoration: none; font-size: 0.88rem; font-weight: 600; }
@@ -244,6 +243,22 @@
             var data = await response.Content.ReadFromJsonAsync<MeResponse>();
             userId = data!.Id;
             email = data.Email;
+
+            // Carrega histórico do banco
+            try
+            {
+                var hist = await Http.GetFromJsonAsync<List<MessageDto>>($"/v1/chat/messages?chatId={chatId}");
+                if (hist is not null)
+                {
+                    foreach (var m in hist)
+                        mensagens.Add(new ChatMessage { Text = m.Content });
+                }
+            }
+            catch (Exception ex)
+            {
+                erro = $"Erro histórico: {ex.Message}";
+            }
+
             carregando = false;
             StateHasChanged();
             await ConectarAsync();
@@ -367,5 +382,13 @@
     public async ValueTask DisposeAsync() { await _cts.CancelAsync(); _stream?.Close(); _tcpClient?.Close(); }
 
     private record MeResponse(Guid Id, string Email);
-    private class ChatMessage { public bool IsFile { get; set; } public string Text { get; set; } = ""; public string Sender { get; set; } = ""; public string FileName { get; set; } = ""; public string FileDataUrl { get; set; } = ""; }
+    private record MessageDto(string Content, DateTime CreatedAt);
+    private class ChatMessage
+    {
+        public bool IsFile { get; set; }
+        public string Text { get; set; } = "";
+        public string Sender { get; set; } = "";
+        public string FileName { get; set; } = "";
+        public string FileDataUrl { get; set; } = "";
+    }
 }
