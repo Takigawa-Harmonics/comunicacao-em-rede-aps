@@ -96,6 +96,7 @@ public class ChatSocketServer : BackgroundService
 
                 if (headerCheck.StartsWith("FILE:"))
                 {
+                    // Formato: FILE:nomeDoArquivo:tamanhoEmBytes\n[bytes do arquivo]
                     var newlineIndex = headerCheck.IndexOf('\n');
                     if (newlineIndex < 0) continue;
 
