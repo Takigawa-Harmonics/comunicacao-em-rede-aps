@@ -2,44 +2,224 @@
 @rendermode InteractiveServer
 @inject NavigationManager Nav
 @inject HttpClient Http
-@using System.Net.WebSockets
-@using System.Text
 @implements IAsyncDisposable
 
-<h3>Chat</h3>
-
-@if (carregando)
-{
-    <p>Carregando...</p>
-}
-else if (!conectado)
-{
-    <p>Conectando ao chat...</p>
-}
-else
-{
-    <div style="border:1px solid #ccc; height:400px; overflow-y:auto; padding:10px; margin-bottom:10px;">
-        @foreach (var msg in mensagens)
-        {
-            <p>@msg</p>
-        }
+<div class="chat-wrapper">
+    <div class="chat-header">
+        <div class="header-left">
+            <span class="header-icon">🌊</span>
+            <div>
+                <h1 class="header-title">Sistema de Monitoramento</h1>
+                <p class="header-subtitle">Rio Tietê — Canal de Comunicação das Equipes</p>
+            </div>
+        </div>
+        <div class="header-status">
+            @if (conectado)
+            {
+                <span class="status-dot online"></span>
+                <span class="status-text">Conectado como <strong>@email</strong></span>
+            }
+            else
+            {
+                <span class="status-dot offline"></span>
+                <span class="status-text">Conectando...</span>
+            }
+        </div>
     </div>
 
-    <input @bind="textoMensagem" @onkeydown="OnKeyDown" placeholder="Digite uma mensagem..." style="width:80%" />
-    <button @onclick="EnviarMensagem">Enviar</button>
-}
+    @if (carregando)
+    {
+        <div class="loading-screen">
+            <div class="loading-spinner"></div>
+            <p>Carregando sistema...</p>
+        </div>
+    }
+    else
+    {
+        <div class="chat-body">
+            <div class="messages-area">
+                @if (mensagens.Count == 0)
+                {
+                    <div class="empty-state">
+                        <span>🌿</span>
+                        <p>Nenhuma mensagem ainda. Inicie a comunicação com sua equipe.</p>
+                    </div>
+                }
+                @foreach (var msg in mensagens)
+                {
+                    @if (msg.IsFile)
+                    {
+                        <div class="message-bubble file-message">
+                            <span class="file-icon">📎</span>
+                            <div class="file-info">
+                                <span class="file-sender">@msg.Sender</span>
+                                <a class="file-link" href="@msg.FileDataUrl" download="@msg.FileName">@msg.FileName</a>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="message-bubble text-message">
+                            <p>@msg.Text</p>
+                        </div>
+                    }
+                }
+            </div>
 
-@if (!string.IsNullOrEmpty(erro))
-{
-    <p style="color:red">@erro</p>
-}
+            <div class="input-area">
+                <input class="message-input" @bind="textoMensagem" @onkeydown="OnKeyDown" placeholder="Digite sua mensagem para a equipe..." />
+                <button class="btn-send" @onclick="EnviarMensagem">Enviar ➤</button>
+                <InputFile OnChange="EnviarArquivo" style="display:none" id="fileInput" />
+                <label for="fileInput" class="btn-file" title="Enviar arquivo">📎</label>
+            </div>
+
+            @if (!string.IsNullOrEmpty(erro))
+            {
+                <div class="error-bar">⚠️ @erro</div>
+            }
+        </div>
+    }
+</div>
+
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0a1628; }
+
+    .chat-wrapper {
+        min-height: 100vh;
+        background:
+            linear-gradient(180deg, rgba(0,40,80,0.92) 0%, rgba(0,20,40,0.97) 100%),
+            url('https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Rio_Tiet%C3%AA_-_S%C3%A3o_Paulo.jpg/1280px-Rio_Tiet%C3%AA_-_S%C3%A3o_Paulo.jpg') center/cover no-repeat fixed;
+        display: flex;
+        flex-direction: column;
+        font-family: 'Segoe UI', sans-serif;
+    }
+
+    .chat-header {
+        background: rgba(0,60,100,0.85);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid rgba(0,180,200,0.3);
+        padding: 16px 28px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .header-left { display: flex; align-items: center; gap: 14px; }
+    .header-icon { font-size: 2rem; filter: drop-shadow(0 0 8px rgba(0,200,255,0.6)); }
+    .header-title { color: #e0f7ff; font-size: 1.2rem; font-weight: 700; }
+    .header-subtitle { color: rgba(160,220,240,0.8); font-size: 0.78rem; margin-top: 2px; }
+
+    .header-status {
+        display: flex; align-items: center; gap: 8px;
+        background: rgba(0,0,0,0.3); padding: 6px 14px;
+        border-radius: 20px; border: 1px solid rgba(0,180,200,0.2);
+    }
+
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .status-dot.online { background: #00e676; box-shadow: 0 0 6px #00e676; animation: pulse 2s infinite; }
+    .status-dot.offline { background: #ff5252; }
+    @@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
+    .status-text { color: rgba(200,235,245,0.9); font-size: 0.82rem; }
+
+    .loading-screen {
+        flex: 1; display: flex; flex-direction: column;
+        align-items: center; justify-content: center; gap: 16px;
+        color: rgba(160,220,240,0.8);
+    }
+
+    .loading-spinner {
+        width: 40px; height: 40px;
+        border: 3px solid rgba(0,180,220,0.2);
+        border-top-color: #00b4dc;
+        border-radius: 50%; animation: spin 0.8s linear infinite;
+    }
+    @@keyframes spin { to { transform: rotate(360deg); } }
+
+    .chat-body {
+        flex: 1; display: flex; flex-direction: column;
+        padding: 20px 28px; gap: 16px;
+        max-width: 900px; width: 100%; margin: 0 auto;
+    }
+
+    .messages-area {
+        flex: 1; min-height: 400px; max-height: 60vh;
+        overflow-y: auto; display: flex; flex-direction: column; gap: 10px;
+        padding: 16px;
+        background: rgba(0,20,40,0.6);
+        border: 1px solid rgba(0,180,200,0.2);
+        border-radius: 12px; backdrop-filter: blur(8px);
+    }
+
+    .messages-area::-webkit-scrollbar { width: 4px; }
+    .messages-area::-webkit-scrollbar-thumb { background: rgba(0,180,200,0.3); border-radius: 4px; }
+
+    .empty-state {
+        flex: 1; display: flex; flex-direction: column;
+        align-items: center; justify-content: center; gap: 12px;
+        color: rgba(160,220,240,0.5); font-size: 0.9rem;
+    }
+    .empty-state span { font-size: 2rem; }
+
+    .message-bubble { padding: 10px 14px; border-radius: 10px; max-width: 80%; animation: fadeIn 0.2s ease; }
+    @@keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+
+    .text-message {
+        background: rgba(0,80,120,0.7);
+        border: 1px solid rgba(0,180,200,0.2);
+        color: #d0eef8; font-size: 0.92rem; line-height: 1.5;
+    }
+
+    .file-message {
+        background: rgba(0,60,80,0.8);
+        border: 1px solid rgba(0,220,180,0.3);
+        display: flex; align-items: center; gap: 10px;
+    }
+
+    .file-icon { font-size: 1.4rem; }
+    .file-info { display: flex; flex-direction: column; gap: 2px; }
+    .file-sender { font-size: 0.75rem; color: rgba(160,220,240,0.7); }
+    .file-link { color: #00e5ff; text-decoration: none; font-size: 0.88rem; font-weight: 600; }
+    .file-link:hover { text-decoration: underline; }
+
+    .input-area {
+        display: flex; gap: 10px; align-items: center;
+        background: rgba(0,20,40,0.7);
+        border: 1px solid rgba(0,180,200,0.3);
+        border-radius: 12px; padding: 10px 14px;
+        backdrop-filter: blur(8px);
+    }
+
+    .message-input { flex: 1; background: transparent; border: none; outline: none; color: #d0eef8; font-size: 0.92rem; font-family: inherit; }
+    .message-input::placeholder { color: rgba(160,220,240,0.4); }
+
+    .btn-send {
+        background: linear-gradient(135deg, #0077a8, #00b4dc);
+        border: none; border-radius: 8px; color: white;
+        padding: 8px 18px; font-size: 0.88rem; font-weight: 600;
+        cursor: pointer; transition: opacity 0.2s;
+    }
+    .btn-send:hover { opacity: 0.85; }
+
+    .btn-file {
+        font-size: 1.2rem; cursor: pointer; padding: 6px 10px;
+        border-radius: 8px; background: rgba(0,180,200,0.15);
+        border: 1px solid rgba(0,180,200,0.3); transition: background 0.2s;
+    }
+    .btn-file:hover { background: rgba(0,180,200,0.3); }
+
+    .error-bar {
+        background: rgba(200,0,0,0.3); border: 1px solid rgba(255,80,80,0.4);
+        color: #ffaaaa; padding: 8px 14px; border-radius: 8px; font-size: 0.85rem;
+    }
+</style>
 
 @code {
-    private ClientWebSocket? _ws;
+    private System.Net.Sockets.TcpClient? _tcpClient;
     private System.Net.Sockets.NetworkStream? _stream;
     private CancellationTokenSource _cts = new();
 
-    private List<string> mensagens = new();
+    private List<ChatMessage> mensagens = new();
     private string textoMensagem = "";
     private string erro = "";
     private bool conectado = false;
@@ -51,10 +231,7 @@ else
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
-        {
-            await CarregarUsuarioAsync();
-        }
+        if (firstRender) await CarregarUsuarioAsync();
     }
 
     private async Task CarregarUsuarioAsync()
@@ -62,20 +239,13 @@ else
         try
         {
             var response = await Http.GetAsync("/v1/session/me");
-
-            if (!response.IsSuccessStatusCode)
-            {
-                Nav.NavigateTo("/login");
-                return;
-            }
+            if (!response.IsSuccessStatusCode) { Nav.NavigateTo("/login"); return; }
 
             var data = await response.Content.ReadFromJsonAsync<MeResponse>();
             userId = data!.Id;
             email = data.Email;
-
             carregando = false;
             StateHasChanged();
-
             await ConectarAsync();
         }
         catch (Exception ex)
@@ -90,92 +260,112 @@ else
     {
         try
         {
-            _ws = new ClientWebSocket();
+            _tcpClient = new System.Net.Sockets.TcpClient();
+            await _tcpClient.ConnectAsync("localhost", 5002);
+            _stream = _tcpClient.GetStream();
 
-            var httpUri = Nav.ToAbsoluteUri("ws://localhost:5165/ws/chat");
-
-            var wsUri = new UriBuilder(httpUri)
-            {
-                Scheme = httpUri.Scheme == "https" ? "wss" : "ws"
-            }.Uri;
-            
-            await _ws.ConnectAsync(wsUri, _cts.Token);
-
-            var auth = System.Text.Json.JsonSerializer.Serialize(new
-            {
-                UserId = userId,
-                Email = email,
-                ChatId = chatId
-            });
-
-            var authBytes = Encoding.UTF8.GetBytes(auth);
-            await _ws.SendAsync(authBytes, WebSocketMessageType.Text, true, _cts.Token);
+            var auth = System.Text.Json.JsonSerializer.Serialize(new { UserId = userId, Email = email, ChatId = chatId });
+            await _stream.WriteAsync(System.Text.Encoding.UTF8.GetBytes(auth), _cts.Token);
 
             conectado = true;
             StateHasChanged();
-
             _ = ReceberMensagensAsync();
         }
-        catch (Exception ex)
-        {
-            erro = $"Erro ao conectar: {ex.Message}";
-            StateHasChanged();
-        }
+        catch (Exception ex) { erro = $"Erro ao conectar: {ex.Message}"; StateHasChanged(); }
     }
 
     private async Task ReceberMensagensAsync()
     {
-        var buffer = new byte[4096];
-
+        var buffer = new byte[65536];
         try
         {
-            while (_ws is not null && _ws.State == WebSocketState.Open)
+            while (!_cts.Token.IsCancellationRequested && _stream is not null)
             {
-                var result = await _ws.ReceiveAsync(buffer, _cts.Token);
+                int bytesRead = await _stream.ReadAsync(buffer, _cts.Token);
+                if (bytesRead == 0) break;
 
-                if (result.MessageType == WebSocketMessageType.Close)
-                    break;
+                var headerCheck = System.Text.Encoding.UTF8.GetString(buffer, 0, Math.Min(bytesRead, 512));
 
-                var msg = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                if (headerCheck.StartsWith("FILE:"))
+                {
+                    var newlineIndex = headerCheck.IndexOf('\n');
+                    if (newlineIndex < 0) continue;
+                    var headerLine = headerCheck[..newlineIndex];
+                    var parts = headerLine.Split(':', 4);
+                    if (parts.Length < 4) continue;
+                    var senderEmail = parts[1];
+                    var fileName = parts[2];
+                    if (!long.TryParse(parts[3], out var fileSize)) continue;
 
-                mensagens.Add(msg);
+                    var headerByteCount = System.Text.Encoding.UTF8.GetByteCount(headerLine + "\n");
+                    var fileBytes = new byte[fileSize];
+                    var received = bytesRead - headerByteCount;
+                    Array.Copy(buffer, headerByteCount, fileBytes, 0, Math.Min(received, (int)fileSize));
+                    while (received < fileSize)
+                    {
+                        var chunk = await _stream.ReadAsync(fileBytes, received, (int)(fileSize - received), _cts.Token);
+                        if (chunk == 0) break;
+                        received += chunk;
+                    }
+
+                    var base64 = Convert.ToBase64String(fileBytes);
+                    var mimeType = GetMimeType(fileName);
+                    mensagens.Add(new ChatMessage { IsFile = true, Sender = senderEmail, FileName = fileName, FileDataUrl = $"data:{mimeType};base64,{base64}" });
+                }
+                else if (headerCheck.StartsWith("TEXT:"))
+                {
+                    mensagens.Add(new ChatMessage { Text = headerCheck["TEXT:".Length..].TrimEnd('\0') });
+                }
+
                 await InvokeAsync(StateHasChanged);
             }
         }
-        catch (Exception ex)
-        {
-            erro = $"Erro na conexão: {ex.Message}";
-            await InvokeAsync(StateHasChanged);
-        }
+        catch (OperationCanceledException) { }
+        catch (Exception ex) { erro = $"Conexão encerrada: {ex.Message}"; await InvokeAsync(StateHasChanged); }
     }
 
     private async Task EnviarMensagem()
     {
-        if (string.IsNullOrWhiteSpace(textoMensagem) || _ws is null)
-            return;
-
-        var bytes = Encoding.UTF8.GetBytes(textoMensagem);
-
-        await _ws.SendAsync(bytes, WebSocketMessageType.Text, true, _cts.Token);
-
+        if (string.IsNullOrWhiteSpace(textoMensagem) || _stream is null) return;
+        await _stream.WriteAsync(System.Text.Encoding.UTF8.GetBytes(textoMensagem), _cts.Token);
         textoMensagem = "";
     }
 
-    private async Task OnKeyDown(KeyboardEventArgs e)
+    private async Task EnviarArquivo(InputFileChangeEventArgs e)
     {
-        if (e.Key == "Enter") await EnviarMensagem();
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        _cts.Cancel();
-
-        if (_ws is not null)
+        if (_stream is null) return;
+        var file = e.File;
+        try
         {
-            await _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Dispose", CancellationToken.None);
-            _ws.Dispose();
+            using var ms = new System.IO.MemoryStream();
+            await file.OpenReadStream(5 * 1024 * 1024).CopyToAsync(ms);
+            var fileBytes = ms.ToArray();
+            var header = $"FILE:{file.Name}:{fileBytes.Length}\n";
+            var headerBytes = System.Text.Encoding.UTF8.GetBytes(header);
+            var packet = new byte[headerBytes.Length + fileBytes.Length];
+            Array.Copy(headerBytes, packet, headerBytes.Length);
+            Array.Copy(fileBytes, 0, packet, headerBytes.Length, fileBytes.Length);
+            await _stream.WriteAsync(packet, _cts.Token);
+
+            var base64 = Convert.ToBase64String(fileBytes);
+            mensagens.Add(new ChatMessage { IsFile = true, Sender = email, FileName = file.Name, FileDataUrl = $"data:{GetMimeType(file.Name)};base64,{base64}" });
+            StateHasChanged();
         }
+        catch (Exception ex) { erro = $"Erro ao enviar arquivo: {ex.Message}"; StateHasChanged(); }
     }
+
+    private static string GetMimeType(string fileName) => System.IO.Path.GetExtension(fileName).ToLowerInvariant() switch
+    {
+        ".pdf" => "application/pdf", ".png" => "image/png",
+        ".jpg" or ".jpeg" => "image/jpeg", ".gif" => "image/gif",
+        ".txt" => "text/plain", ".zip" => "application/zip",
+        _ => "application/octet-stream"
+    };
+
+    private async Task OnKeyDown(KeyboardEventArgs e) { if (e.Key == "Enter") await EnviarMensagem(); }
+
+    public async ValueTask DisposeAsync() { await _cts.CancelAsync(); _stream?.Close(); _tcpClient?.Close(); }
 
     private record MeResponse(Guid Id, string Email);
+    private class ChatMessage { public bool IsFile { get; set; } public string Text { get; set; } = ""; public string Sender { get; set; } = ""; public string FileName { get; set; } = ""; public string FileDataUrl { get; set; } = ""; }
 }

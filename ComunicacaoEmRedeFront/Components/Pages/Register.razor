@@ -3,23 +3,74 @@
 @inject NavigationManager Nav
 @inject HttpClient Http
 
-<h3>Registro</h3>
+<div class="login-wrapper">
+    <div class="login-card">
+        <div class="login-logo">🌿</div>
+        <h1 class="login-title">Cadastro de Inspetor</h1>
+        <p class="login-subtitle">Rio Tietê — Registro de Acesso</p>
 
-<input placeholder="Email" @bind="email" />
-<br />
-<input type="password" placeholder="Senha" @bind="senha" />
-<br />
-@if (!string.IsNullOrEmpty(erro))
-{
-    <p style="color:red">@erro</p>
-}
-@if (!string.IsNullOrEmpty(sucesso))
-{
-    <p style="color:green">@sucesso</p>
-}
-<br />
+        <div class="form-group">
+            <label>E-mail</label>
+            <input type="email" placeholder="seu@email.com" @bind="email" />
+        </div>
+        <div class="form-group">
+            <label>Senha</label>
+            <input type="password" placeholder="Mín. 8 caracteres" @bind="senha" />
+        </div>
 
-<button @onclick="Registrar">Registrar</button>
+        @if (!string.IsNullOrEmpty(erro))
+        {
+            <div class="error-msg">⚠️ @erro</div>
+        }
+        @if (!string.IsNullOrEmpty(sucesso))
+        {
+            <div class="success-msg">✅ @sucesso</div>
+        }
+
+        <button class="btn-login" @onclick="Registrar">Criar Conta</button>
+        <p class="register-link">Já tem conta? <a href="/login">Entrar</a></p>
+    </div>
+</div>
+
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0a1628; }
+
+    .login-wrapper {
+        min-height: 100vh; display: flex; align-items: center; justify-content: center;
+        background:
+            linear-gradient(180deg, rgba(0,30,60,0.93) 0%, rgba(0,15,35,0.97) 100%),
+            url('https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Rio_Tiet%C3%AA_-_S%C3%A3o_Paulo.jpg/1280px-Rio_Tiet%C3%AA_-_S%C3%A3o_Paulo.jpg') center/cover no-repeat fixed;
+        font-family: 'Segoe UI', sans-serif; padding: 20px;
+    }
+
+    .login-card {
+        background: rgba(0,30,60,0.85); backdrop-filter: blur(16px);
+        border: 1px solid rgba(0,180,200,0.3); border-radius: 16px;
+        padding: 40px 36px; width: 100%; max-width: 400px;
+        display: flex; flex-direction: column; gap: 18px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+
+    .login-logo { font-size: 2.8rem; text-align: center; filter: drop-shadow(0 0 12px rgba(0,200,100,0.7)); }
+    .login-title { color: #e0f7ff; font-size: 1.3rem; font-weight: 700; text-align: center; }
+    .login-subtitle { color: rgba(160,220,240,0.7); font-size: 0.8rem; text-align: center; margin-top: -10px; }
+
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group label { color: rgba(160,220,240,0.8); font-size: 0.82rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .form-group input { background: rgba(0,50,80,0.6); border: 1px solid rgba(0,180,200,0.3); border-radius: 8px; padding: 10px 14px; color: #d0eef8; font-size: 0.92rem; font-family: inherit; outline: none; }
+    .form-group input:focus { border-color: rgba(0,200,230,0.7); }
+    .form-group input::placeholder { color: rgba(160,220,240,0.3); }
+
+    .error-msg { background: rgba(200,0,0,0.25); border: 1px solid rgba(255,80,80,0.4); color: #ffaaaa; padding: 8px 12px; border-radius: 8px; font-size: 0.84rem; }
+    .success-msg { background: rgba(0,150,80,0.25); border: 1px solid rgba(0,220,120,0.4); color: #aaffcc; padding: 8px 12px; border-radius: 8px; font-size: 0.84rem; }
+
+    .btn-login { background: linear-gradient(135deg, #0077a8, #00b4dc); border: none; border-radius: 8px; color: white; padding: 12px; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
+    .btn-login:hover { opacity: 0.88; }
+
+    .register-link { text-align: center; color: rgba(160,220,240,0.6); font-size: 0.84rem; }
+    .register-link a { color: #00e5ff; text-decoration: none; font-weight: 600; }
+</style>
 
 @code {
     string email = "";

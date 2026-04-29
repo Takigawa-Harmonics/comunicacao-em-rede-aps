@@ -1,11 +1,108 @@
 ﻿@page "/"
 
-<h1>Bem-vindo!</h1>
+<div class="home-wrapper">
+    <div class="home-content">
+        <div class="home-logo">🌊</div>
+        <h1 class="home-title">Sistema de Monitoramento</h1>
+        <h2 class="home-subtitle">Rio Tietê</h2>
+        <p class="home-desc">Plataforma de comunicação em tempo real para equipes de inspeção ambiental ao longo do Rio Tietê.</p>
 
-<p>
-    <NavLink href="/login">Login</NavLink>
-</p>
+        <div class="home-buttons">
+            <a href="/login" class="btn-primary">Entrar no Sistema</a>
+            <a href="/register" class="btn-secondary">Criar Conta</a>
+        </div>
+    </div>
+</div>
 
-<p>
-    <NavLink href="/register">Registrar</NavLink>
-</p>
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0a1628; }
+
+    .home-wrapper {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background:
+            linear-gradient(180deg, rgba(0,30,60,0.90) 0%, rgba(0,15,35,0.96) 100%),
+            url('https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Rio_Tiet%C3%AA_-_S%C3%A3o_Paulo.jpg/1280px-Rio_Tiet%C3%AA_-_S%C3%A3o_Paulo.jpg') center/cover no-repeat fixed;
+        font-family: 'Segoe UI', sans-serif;
+        padding: 20px;
+    }
+
+    .home-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+        text-align: center;
+        max-width: 520px;
+    }
+
+    .home-logo {
+        font-size: 4rem;
+        filter: drop-shadow(0 0 16px rgba(0,200,255,0.8));
+        animation: float 3s ease-in-out infinite;
+    }
+
+    @@keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
+
+    .home-title {
+        color: #e0f7ff;
+        font-size: 2rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
+
+    .home-subtitle {
+        color: #00e5ff;
+        font-size: 1.1rem;
+        font-weight: 400;
+        margin-top: -14px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+    }
+
+    .home-desc {
+        color: rgba(160,220,240,0.75);
+        font-size: 0.95rem;
+        line-height: 1.6;
+        max-width: 400px;
+    }
+
+    .home-buttons {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 8px;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #0077a8, #00b4dc);
+        color: white;
+        text-decoration: none;
+        padding: 12px 28px;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 700;
+        transition: opacity 0.2s;
+    }
+    .btn-primary:hover { opacity: 0.85; }
+
+    .btn-secondary {
+        background: transparent;
+        color: #00e5ff;
+        text-decoration: none;
+        padding: 12px 28px;
+        border-radius: 8px;
+        border: 1px solid rgba(0,180,200,0.5);
+        font-size: 0.95rem;
+        font-weight: 600;
+        transition: background 0.2s;
+    }
+    .btn-secondary:hover { background: rgba(0,180,200,0.1); }
+</style>

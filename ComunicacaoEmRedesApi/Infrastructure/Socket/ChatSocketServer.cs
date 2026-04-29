@@ -10,7 +10,6 @@ using Microsoft.Extensions.Hosting;
 
 namespace ComunicacaoEmRedesApi.Infrastructure.Socket;
 
-// Representa um cliente conectado
 public class ConnectedClient
 {
     public TcpClient TcpClient { get; set; } = null!;
@@ -22,7 +21,6 @@ public class ConnectedClient
 
 public class ChatSocketServer : BackgroundService
 {
-    // Dicionário de clientes conectados: clientId -> ConnectedClient
     private static readonly ConcurrentDictionary<Guid, ConnectedClient> _clients = new();
 
     private readonly IServiceScopeFactory _scopeFactory;
@@ -60,12 +58,10 @@ public class ChatSocketServer : BackgroundService
     {
         var clientId = Guid.NewGuid();
         var stream = tcpClient.GetStream();
-        var buffer = new byte[4096];
+        var buffer = new byte[65536];
 
         try
         {
-            // Primeira mensagem: autenticação
-            // Cliente deve mandar: {"userId":"...","email":"...","chatId":"..."}
             int bytesRead = await stream.ReadAsync(buffer, ct);
             if (bytesRead == 0) return;
 
@@ -74,12 +70,11 @@ public class ChatSocketServer : BackgroundService
 
             if (auth is null || auth.UserId == Guid.Empty || auth.ChatId == Guid.Empty)
             {
-                await SendAsync(stream, "ERRO: autenticação inválida", ct);
+                await SendTextAsync(stream, "ERRO: autenticação inválida", ct);
                 tcpClient.Close();
                 return;
             }
 
-            // Registra cliente
             var client = new ConnectedClient
             {
                 TcpClient = tcpClient,
@@ -90,23 +85,53 @@ public class ChatSocketServer : BackgroundService
             _clients[clientId] = client;
 
             Console.WriteLine($"[Socket] {auth.Email} entrou no chat {auth.ChatId}");
-            await BroadcastAsync(auth.ChatId, $"{auth.Email} entrou no chat.", clientId, ct);
+            await BroadcastTextAsync(auth.ChatId, $"{auth.Email} entrou no chat.", clientId, ct);
 
-            // Loop de mensagens
             while (!ct.IsCancellationRequested)
             {
                 bytesRead = await stream.ReadAsync(buffer, ct);
                 if (bytesRead == 0) break;
 
-                var content = Encoding.UTF8.GetString(buffer, 0, bytesRead).Trim();
-                Console.WriteLine($"[Socket] {auth.Email}: {content}");
+                var headerCheck = Encoding.UTF8.GetString(buffer, 0, Math.Min(bytesRead, 512));
 
-                // Salva no banco
-                await SaveMessageAsync(auth.UserId, auth.ChatId, content);
+                if (headerCheck.StartsWith("FILE:"))
+                {
+                    // Formato: FILE:nomeDoArquivo:tamanhoEmBytes\n[bytes do arquivo]
+                    var newlineIndex = headerCheck.IndexOf('\n');
+                    if (newlineIndex < 0) continue;
 
-                // Broadcast pra todos no mesmo chat
-                var msg = $"{auth.Email}: {content}";
-                await BroadcastAsync(auth.ChatId, msg, null, ct);
+                    var headerLine = headerCheck[..newlineIndex];
+                    var parts = headerLine.Split(':', 3);
+                    if (parts.Length < 3) continue;
+
+                    var fileName = parts[1];
+                    if (!long.TryParse(parts[2], out var fileSize)) continue;
+
+                    Console.WriteLine($"[Socket] {auth.Email} enviando arquivo: {fileName} ({fileSize} bytes)");
+
+                    var headerByteCount = Encoding.UTF8.GetByteCount(headerLine + "\n");
+                    var fileBytes = new byte[fileSize];
+                    var fileBytesReceived = bytesRead - headerByteCount;
+
+                    Array.Copy(buffer, headerByteCount, fileBytes, 0, Math.Min(fileBytesReceived, (int)fileSize));
+
+                    while (fileBytesReceived < fileSize)
+                    {
+                        var chunk = await stream.ReadAsync(fileBytes, fileBytesReceived, (int)(fileSize - fileBytesReceived), ct);
+                        if (chunk == 0) break;
+                        fileBytesReceived += chunk;
+                    }
+
+                    await BroadcastFileAsync(auth.ChatId, auth.Email, fileName, fileBytes, clientId, ct);
+                }
+                else
+                {
+                    var content = headerCheck.Trim();
+                    Console.WriteLine($"[Socket] {auth.Email}: {content}");
+
+                    await SaveMessageAsync(auth.UserId, auth.ChatId, content);
+                    await BroadcastTextAsync(auth.ChatId, $"{auth.Email}: {content}", null, ct);
+                }
             }
         }
         catch (Exception ex)
@@ -117,35 +142,42 @@ public class ChatSocketServer : BackgroundService
         {
             if (_clients.TryRemove(clientId, out var removed))
             {
-                await BroadcastAsync(removed.ChatId, $"{removed.Email} saiu do chat.", clientId, ct);
+                await BroadcastTextAsync(removed.ChatId, $"{removed.Email} saiu do chat.", clientId, ct);
             }
             tcpClient.Close();
         }
     }
 
-    // Envia mensagem para todos no mesmo chatId (exceto o remetente se excludeId != null)
-    private static async Task BroadcastAsync(Guid chatId, string message, Guid? excludeClientId, CancellationToken ct)
+    private static async Task BroadcastTextAsync(Guid chatId, string message, Guid? excludeClientId, CancellationToken ct)
     {
-        var bytes = Encoding.UTF8.GetBytes(message);
+        var bytes = Encoding.UTF8.GetBytes("TEXT:" + message);
         foreach (var (id, client) in _clients)
         {
             if (client.ChatId != chatId) continue;
             if (excludeClientId.HasValue && id == excludeClientId.Value) continue;
-
-            try
-            {
-                await client.Stream.WriteAsync(bytes, ct);
-            }
-            catch
-            {
-                // cliente desconectado, ignora
-            }
+            try { await client.Stream.WriteAsync(bytes, ct); } catch { }
         }
     }
 
-    private static async Task SendAsync(NetworkStream stream, string message, CancellationToken ct)
+    private static async Task BroadcastFileAsync(Guid chatId, string senderEmail, string fileName, byte[] fileBytes, Guid? excludeClientId, CancellationToken ct)
     {
-        var bytes = Encoding.UTF8.GetBytes(message);
+        var header = $"FILE:{senderEmail}:{fileName}:{fileBytes.Length}\n";
+        var headerBytes = Encoding.UTF8.GetBytes(header);
+        var packet = new byte[headerBytes.Length + fileBytes.Length];
+        Array.Copy(headerBytes, packet, headerBytes.Length);
+        Array.Copy(fileBytes, 0, packet, headerBytes.Length, fileBytes.Length);
+
+        foreach (var (id, client) in _clients)
+        {
+            if (client.ChatId != chatId) continue;
+            if (excludeClientId.HasValue && id == excludeClientId.Value) continue;
+            try { await client.Stream.WriteAsync(packet, ct); } catch { }
+        }
+    }
+
+    private static async Task SendTextAsync(NetworkStream stream, string message, CancellationToken ct)
+    {
+        var bytes = Encoding.UTF8.GetBytes("TEXT:" + message);
         await stream.WriteAsync(bytes, ct);
     }
 
