@@ -17,16 +17,14 @@ public class ChatController : ControllerBase
     }
 
     [HttpGet("messages")]
-public async Task<IResult> GetMessages([FromQuery] Guid chatId)
-{
-    var messages = await _messageRepository.GetMessagesByChatIdAsync(chatId);
-
-    var result = messages.Select(m => new
+    public async Task<IResult> GetMessages([FromQuery] Guid chatId)
     {
-        m.Content,
-        m.CreatedAt
-    });
-
-    return Results.Ok(result);
-}
+        var messages = await _messageRepository.GetMessagesByChatIdAsync(chatId);
+        return Results.Ok(messages.Select(m => new
+        {
+            Text = $"{m.User!.Email}: {m.Content}",
+            m.CreatedAt,
+            m.UserId
+        }));
+    }
 }

@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using ComunicacaoEmRedesApi.Domain.Models;
 using ComunicacaoEmRedesApi.Domain.Repositories;
+using ComunicacaoEmRedesApi.Domain.Services.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -23,12 +24,13 @@ public class ChatSocketServer : BackgroundService
 {
     private static readonly ConcurrentDictionary<Guid, ConnectedClient> _clients = new();
 
-    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly IServiceProvider _serviceProvider;
+    
     private TcpListener? _listener;
 
-    public ChatSocketServer(IServiceScopeFactory scopeFactory)
+    public ChatSocketServer(IServiceProvider serviceProvider)
     {
-        _scopeFactory = scopeFactory;
+        _serviceProvider = serviceProvider;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -183,12 +185,13 @@ public class ChatSocketServer : BackgroundService
 
     private async Task SaveMessageAsync(Guid userId, Guid chatId, string content)
     {
-        using var scope = _scopeFactory.CreateScope();
-        var messageRepo = scope.ServiceProvider.GetRequiredService<IMessageRepository>();
-        var chatRepo = scope.ServiceProvider.GetRequiredService<IChatRepository>();
+        using var scope = _serviceProvider.CreateScope();
 
-        var chatOption = await chatRepo.GetChatByIdAsync(chatId);
-        chatOption.IfSome(async _ =>
+        var chatService = scope.ServiceProvider.GetRequiredService<IChatService>();
+        var messageRepository = scope.ServiceProvider.GetRequiredService<IMessageRepository>();
+        
+        var chat = await chatService.GetChatById(chatId);
+        if (chat.IsSuccess)
         {
             var message = new Message
             {
@@ -198,8 +201,9 @@ public class ChatSocketServer : BackgroundService
                 UserId = userId,
                 CreatedAt = DateTime.UtcNow
             };
-            await messageRepo.SaveMessageAsync(message);
-        });
+
+            await messageRepository.SaveMessageAsync(message);
+        }
     }
 
     private record AuthPayload(Guid UserId, string Email, Guid ChatId);

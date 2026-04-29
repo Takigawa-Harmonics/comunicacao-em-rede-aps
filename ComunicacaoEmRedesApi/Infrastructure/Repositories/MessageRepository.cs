@@ -33,6 +33,7 @@ public class MessageRepository : IMessageRepository
     public async Task<List<Message>> GetMessagesByChatIdAsync(Guid chatId)
     {
         return await _context.Messages
+            .Include(e => e.User)
             .Where(m => m.ChatId == chatId)
             .OrderBy(m => m.CreatedAt)
             .ToListAsync();
